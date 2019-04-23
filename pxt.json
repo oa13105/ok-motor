@@ -1,0 +1,17 @@
+{
+    "name": "OK_Motor",
+    "version": "0.0.1",
+    "description": "A MakeCode package for OK_Board",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "README.md",
+        "OK_Motor.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "public": true
+}
