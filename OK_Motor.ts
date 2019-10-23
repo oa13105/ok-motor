@@ -22,6 +22,31 @@ enum turn {
     Right
 }
 
+enum iKB1Motor {
+    //% block="Forward \u21c8"
+    Forward,
+    //% block="Backward \u21ca"
+    Backward
+}
+
+enum iKB1Turn {
+    //% block="Left \u27f5"
+    Left,
+    //% block="Right \u27f6"
+    Right
+}
+
+/**
+  * Enumeration of SpinMotor.
+  */
+enum iKB1Spin {
+    //% block="Left \u21f5"
+    Left,
+    //% block="Right \u21c5"
+    Right
+}
+
+
 enum Servo {
     //% block="P0"
     Servo0,
@@ -311,7 +336,7 @@ namespace OK_Motor {
     //% blockId="TrackLine" block="Track 2 sensors|Sensor Left%analogPort| Sensor Right%analogPort|Reference%Ref|Speed%speedline|SpeedDrift%speeddrift"
     //% speedline.min=0 speedline.max=100
     //% speeddrift.min=0 speeddrift.max=100
-    //% weight=93
+    //% weight=39
     export function track(PortL: analogPort, PortR: analogPort, Ref: number, speedline: number, speeddrift: number): void {
         let motorspeedline = pins.map(speedline, 0, 100, 1023, 0)
         let loop = true
@@ -347,7 +372,7 @@ namespace OK_Motor {
      */
     //% blockId="Motor_turn90" block="Spin%Turn 90 Degrees|Speed %speedline|Port%analogPort|Reference%number"
     //% speedline.min=0 speedline.max=100
-    //% weight=92
+    //% weight=38
     export function Spin90(rotateLINE: turn, speedline: number, Port: analogPort, Ref: number): void {
         let motorspeedline = pins.map(speedline, 0, 100, 1023, 0)
         pins.digitalWritePin(DigitalPin.P13, 1)
@@ -402,11 +427,83 @@ namespace OK_Motor {
      * Execute puase time
      * @param pausetime  	mSec to delay; eg: 100
     */
-    //% pausetime.min=1  pausetime.max=100000
-    //% blockId=Motor_TimePAUSE block="pause | %pausetime | mS"
-    //% color=#0033cc
-    //% weight=30
-    /*export function PAUSE(pausetime: number): void {
-        basic.pause(pausetime)
-    }*/
+    /**Motor Block to drives motor forward and backward. The speed motor is adjustable between 0 to 100.
+      * @param speed percent of maximum speed, eg: 50
+      */
+    //% blockId="iKB1_Motor" block="iKB1 Motor %iKB1Motor|speed %speed"
+    //% speed.min=0 speed.max=100
+    //% weight=37
+    export function Motor(Motor: iKB1Motor, speed: number): void {
+        if (Motor == iKB1Motor.Forward) {
+            pins.i2cWriteNumber(72, (0x23 * 256) + speed, NumberFormat.UInt16BE, false)
+        }
+        else if (Motor == iKB1Motor.Backward) {
+            pins.i2cWriteNumber(72, (0x23 * 256) + (256 - speed), NumberFormat.UInt16BE, false)
+        }
+    }
+
+    //% blockId="IKB_reset" block="iKB Reset"
+    //% weight=36
+    export function Reset(): void {
+        pins.i2cWriteNumber(72, 0, NumberFormat.UInt8BE, false)
+    }
+
+
+
+    /**MotorCH set Motor Channel and Direction. The speed motor is adjustable between 0 to 100.   
+     * @param Speed percent of maximum Speed, eg: 50
+     */
+    //% blockId="iKB1_MotorCH" block="setMotor %iKB1MotorCH | Direction %iKB1Motor | Speed %Speed"
+    //% Speed.min=0 Speed.max=100
+    //% weight=35
+    export function setMotor(Channel: iKB1MotorCH, Direction: iKB1Motor, Speed: number): void {
+        if (Direction == iKB1Motor.Forward) {
+            pins.i2cWriteNumber(72, (Channel * 256) + (Speed), NumberFormat.UInt16BE, false)
+        }
+        else if (Direction == iKB1Motor.Backward) {
+            pins.i2cWriteNumber(72, (Channel * 256) + (256 - Speed), NumberFormat.UInt16BE, false)
+        }
+
+    }
+
+
+    /**Spin Block set direction SpinLeft or SpinRight. The speed motor is adjustable between 0 to 100.  
+      * @param speed percent of maximum speed, eg: 50
+      */
+    //% blockId="iKB1_Spin" block="iKB1 Spin %iKB1Spin|speed %speed"
+    //% speed.min=0 speed.max=100
+    //% weight=34
+    export function Spin(Spin: iKB1Spin, speed: number): void {
+        if (Spin == iKB1Spin.Left) {
+            pins.i2cWriteNumber(72, (0x21 * 256) + (speed), NumberFormat.UInt16BE, false)
+            pins.i2cWriteNumber(72, (0x22 * 256) + (256 - speed), NumberFormat.UInt16BE, false)
+        }
+        else if (Spin == iKB1Spin.Right) {
+            pins.i2cWriteNumber(72, (0x22 * 256) + (speed), NumberFormat.UInt16BE, false)
+            pins.i2cWriteNumber(72, (0x21 * 256) + (256 - speed), NumberFormat.UInt16BE, false)
+        }
+    }
+
+    /**Turn Block set direction TurnLeft or TurnRight. The speed motor is adjustable between 0 to 100.
+      * @param speed percent of maximum speed, eg: 50
+      */
+    //% blockId="iKB1_Turn" block="iKB1 Turn %iKB1Turn|speed %speed"
+    //% speed.min=0 speed.max=100
+    //% weight=33
+    export function Turn(Turn: iKB1Turn, speed: number): void {
+        if (Turn == iKB1Turn.Left) {
+            pins.i2cWriteNumber(72, (0x22 * 256) + (speed), NumberFormat.UInt16BE, false)
+            pins.i2cWriteNumber(72, (0x21 * 256) + (0), NumberFormat.UInt16BE, false)
+        }
+        else if (Turn == iKB1Turn.Right) {
+            pins.i2cWriteNumber(72, (0x21 * 256) + (speed), NumberFormat.UInt16BE, false)
+            pins.i2cWriteNumber(72, (0x22 * 256) + (0), NumberFormat.UInt16BE, false)
+        }
+    }
+
+    //% blockId="AO" block="Motor Stop"
+    //% weight=32
+    export function AO(): void {
+        pins.i2cWriteNumber(72, (0x23 * 256) + (0), NumberFormat.UInt16BE, false)
+    }
 }
